@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commu-Kit", "Commu-Kit\Commu-Kit.csproj", "{63D3D567-AA84-405D-A4FA-7951529EE692}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63D3D567-AA84-405D-A4FA-7951529EE692}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63D3D567-AA84-405D-A4FA-7951529EE692}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63D3D567-AA84-405D-A4FA-7951529EE692}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63D3D567-AA84-405D-A4FA-7951529EE692}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {895DD42A-FCAA-4C62-BD41-2FF6F428DD6B}
+	EndGlobalSection
+EndGlobal
