@@ -7,4 +7,23 @@
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="UAssetAPI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>\lib\UAssetAPI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.0-preview1" />
+    <PackageReference Include="CsvHelper" Version="27.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="source\FileStructure.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="lib" />
+  </ItemGroup>
+
 </Project>
