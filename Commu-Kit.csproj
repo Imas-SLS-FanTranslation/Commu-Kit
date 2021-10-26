@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <Reference Include="UAssetAPI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\New folder\UAssetAPI-master\UAssetAPI\bin\Release\UAssetAPI.dll</HintPath>
+      <HintPath>\lib\UAssetAPI.dll</HintPath>
     </Reference>
   </ItemGroup>
 
@@ -20,6 +20,10 @@
 
   <ItemGroup>
     <Compile Remove="source\FileStructure.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="lib" />
   </ItemGroup>
 
 </Project>
