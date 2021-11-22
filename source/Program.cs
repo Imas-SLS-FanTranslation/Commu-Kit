@@ -4,7 +4,6 @@ using CsvHelper.Configuration;
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace Commu_Kit
@@ -44,14 +43,9 @@ namespace Commu_Kit
                 Console.WriteLine(outputFile);
             }
             var table = new UAssetTable(filePath);
-            var quoteIndexes = new int[] { 3, 4 };
-            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = ",",
-                ShouldQuote = args => quoteIndexes.Contains(args.Row.Index)
-            };
             using (var csvExporter = new CsvWriter(new StreamWriter(outputFile), CultureInfo.InvariantCulture))
             {
+                csvExporter.Context.RegisterClassMap(new CsvClassMap(useNotes: false));
                 csvExporter.WriteRecords(table.GetTrimmedData());
             }
             Console.WriteLine("Written to:" + outputFile);
@@ -73,6 +67,7 @@ namespace Commu_Kit
             };
             using (var csv = new CsvReader(new StreamReader(filePath, Encoding.UTF8), csvConfig))
             {
+                csv.Context.RegisterClassMap(new CsvClassMap(useNotes: true));
                 table.ApplyTrimmedData(csv.GetRecords<CSVClass>());
             }
             table.WriteUAssetToFile(outputFile);

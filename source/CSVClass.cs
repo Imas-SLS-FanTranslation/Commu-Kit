@@ -1,4 +1,5 @@
-﻿using CsvHelper.Configuration.Attributes;
+﻿using CsvHelper.Configuration;
+using CsvHelper.Configuration.Attributes;
 using UAssetAPI.StructTypes;
 
 namespace Commu_Kit
@@ -28,5 +29,21 @@ namespace Commu_Kit
 
         [Name("translatedstr")]
         public string Target { get; set; }
+
+        [Name("translatornotes")]
+        [Optional]
+        public string Notes { get; set; }
+    }
+
+    public sealed class CsvClassMap : ClassMap<CSVClass>
+    {
+        public CsvClassMap(bool useNotes)
+        {
+            AutoMap(System.Globalization.CultureInfo.InvariantCulture);
+            if (!useNotes)
+            {
+                Map(m => m.Notes).Ignore();
+            }
+        }
     }
 }
