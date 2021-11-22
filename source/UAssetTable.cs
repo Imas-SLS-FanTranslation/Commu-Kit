@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using UAssetAPI;
@@ -21,12 +24,37 @@ namespace Commu_Kit
             }
         }
 
-        public IEnumerable<CSVClass> GetTrimmedData()
+        public void ReadCsv(string inFilename)
+        {
+            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                Delimiter = ",",
+                MissingFieldFound = null
+            };
+            using var csv = new CsvReader(new StreamReader(inFilename, System.Text.Encoding.UTF8), csvConfig);
+            csv.Context.RegisterClassMap(new CsvClassMap(useNotes: true));
+            ApplyTrimmedData(csv.GetRecords<CSVClass>());
+        }
+
+        public void WriteUAssetToFile(string outputPath)
+        {
+            openFile.Write(outputPath);
+        }
+
+        public void WriteCsv(string outFilename)
+        {
+            using var csvExporter = new CsvWriter(new StreamWriter(outFilename), CultureInfo.InvariantCulture);
+            IEnumerable<CSVClass> records = GetTrimmedData();
+            csvExporter.Context.RegisterClassMap(new CsvClassMap(useNotes: false));
+            csvExporter.WriteRecords(records);
+        }
+
+        private IEnumerable<CSVClass> GetTrimmedData()
         {
             return Data.Select((entry) => new CSVClass(entry));
         }
 
-        public void ApplyTrimmedData(IEnumerable<CSVClass> trimmedData)
+        private void ApplyTrimmedData(IEnumerable<CSVClass> trimmedData)
         {
             var csvLookup = trimmedData.ToDictionary((entry) => entry.Identifier);
             foreach (var entry in Data)
@@ -36,11 +64,6 @@ namespace Commu_Kit
                     strData.Value = new FString(csvLookup[entry.Name.ToString()].Target.Replace("\r\n", "\n"));
                 }
             }
-        }
-
-        public void WriteUAssetToFile(string outputPath)
-        {
-            openFile.Write(outputPath);
         }
 
         private const UE4Version UNREAL_VERSION = UE4Version.VER_UE4_24;

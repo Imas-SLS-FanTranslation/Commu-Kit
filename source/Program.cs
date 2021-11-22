@@ -1,8 +1,5 @@
 ﻿using CommandLine;
-using CsvHelper;
-using CsvHelper.Configuration;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -43,11 +40,7 @@ namespace Commu_Kit
                 Console.WriteLine(outputFile);
             }
             var table = new UAssetTable(filePath);
-            using (var csvExporter = new CsvWriter(new StreamWriter(outputFile), CultureInfo.InvariantCulture))
-            {
-                csvExporter.Context.RegisterClassMap(new CsvClassMap(useNotes: false));
-                csvExporter.WriteRecords(table.GetTrimmedData());
-            }
+            table.WriteCsv(outputFile);
             Console.WriteLine("Written to:" + outputFile);
         }
 
@@ -60,16 +53,7 @@ namespace Commu_Kit
                 outputFile = $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileNameWithoutExtension(filePath)}-NEW.uasset";
             }
             var table = new UAssetTable(opt.UassetInputPath);
-            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = ",",
-                MissingFieldFound = null
-            };
-            using (var csv = new CsvReader(new StreamReader(filePath, Encoding.UTF8), csvConfig))
-            {
-                csv.Context.RegisterClassMap(new CsvClassMap(useNotes: true));
-                table.ApplyTrimmedData(csv.GetRecords<CSVClass>());
-            }
+            table.ReadCsv(filePath);
             table.WriteUAssetToFile(outputFile);
         }
 
