@@ -1,7 +1,4 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UAssetAPI;
@@ -24,16 +21,20 @@ namespace Commu_Kit
             }
         }
 
-        public void ReadCsv(string inFilename)
+        public void ReadCsv(string inFilename) => Messages = MessageList.ReadCsv(inFilename);
+
+        public void ReadJson(string inFilename) => Messages = MessageList.ReadJson(inFilename);
+
+        public void ReplaceText()
         {
-            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+            var csvLookup = messages.Records.ToDictionary((entry) => entry.Identifier);
+            foreach (var entry in Data)
             {
-                Delimiter = ",",
-                MissingFieldFound = null
-            };
-            using var csv = new CsvReader(new StreamReader(inFilename, System.Text.Encoding.UTF8), csvConfig);
-            csv.Context.RegisterClassMap(new CsvClassMap(useNotes: true));
-            ApplyTrimmedData(csv.GetRecords<CSVClass>());
+                if (entry.Value[1] is StrPropertyData strData)
+                {
+                    strData.Value = new FString(csvLookup[entry.Name.ToString()].Target);
+                }
+            }
         }
 
         public void WriteUAssetToFile(string outputPath)
@@ -41,30 +42,29 @@ namespace Commu_Kit
             openFile.Write(outputPath);
         }
 
-        public void WriteCsv(string outFilename)
-        {
-            using var csvExporter = new CsvWriter(new StreamWriter(outFilename), CultureInfo.InvariantCulture);
-            IEnumerable<CSVClass> records = GetTrimmedData();
-            csvExporter.Context.RegisterClassMap(new CsvClassMap(useNotes: false));
-            csvExporter.WriteRecords(records);
-        }
+        public void WriteCsv(string outFilename) => Messages.WriteCsv(outFilename);
 
-        private IEnumerable<CSVClass> GetTrimmedData()
-        {
-            return Data.Select((entry) => new CSVClass(entry));
-        }
+        public void WriteJson(string outFilename) => Messages.WriteJson(outFilename);
 
-        private void ApplyTrimmedData(IEnumerable<CSVClass> trimmedData)
+        private MessageList Messages
         {
-            var csvLookup = trimmedData.ToDictionary((entry) => entry.Identifier);
-            foreach (var entry in Data)
+            get
             {
-                if (entry.Value[1] is StrPropertyData strData)
+                if (messages is null)
                 {
-                    strData.Value = new FString(csvLookup[entry.Name.ToString()].Target.Replace("\r\n", "\n"));
+                    messages = GetTrimmedData();
                 }
+                return messages;
             }
+            set => messages = value;
         }
+
+        private MessageList GetTrimmedData()
+        {
+            return new MessageList(Data.Select((entry) => new CSVClass(entry)));
+        }
+
+        private MessageList messages = null;
 
         private const UE4Version UNREAL_VERSION = UE4Version.VER_UE4_24;
         private readonly UAsset openFile;

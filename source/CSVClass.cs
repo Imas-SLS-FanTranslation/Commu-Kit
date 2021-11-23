@@ -1,5 +1,9 @@
-﻿using CsvHelper.Configuration;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
+using CsvHelper.TypeConversion;
+using Newtonsoft.Json;
+using System.ComponentModel;
 using UAssetAPI.StructTypes;
 
 namespace Commu_Kit
@@ -32,7 +36,16 @@ namespace Commu_Kit
 
         [Name("translatornotes")]
         [Optional]
-        public string Notes { get; set; }
+        [DefaultValue("")]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string Notes { get; set; } = "";
+    }
+    public class LineBreakConverter : DefaultTypeConverter
+    {
+        public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
+        {
+            return text.Replace("\r\n", "\n");
+        }
     }
 
     public sealed class CsvClassMap : ClassMap<CSVClass>
@@ -40,6 +53,9 @@ namespace Commu_Kit
         public CsvClassMap(bool useNotes)
         {
             AutoMap(System.Globalization.CultureInfo.InvariantCulture);
+            Map(m => m.Source).TypeConverter<LineBreakConverter>();
+            Map(m => m.Target).TypeConverter<LineBreakConverter>();
+            Map(m => m.Notes).TypeConverter<LineBreakConverter>();
             if (!useNotes)
             {
                 Map(m => m.Notes).Ignore();
