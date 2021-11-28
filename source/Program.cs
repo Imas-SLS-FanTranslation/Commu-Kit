@@ -1,20 +1,12 @@
 ﻿using CommandLine;
-using CsvHelper;
-using CsvHelper.Configuration;
 using System;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
-using UAssetAPI;
-using UAssetAPI.PropertyTypes;
 
 namespace Commu_Kit
 {
     internal class Program
     {
-        private const UE4Version UNREAL_VERSION = UE4Version.VER_UE4_24;
-
         [Verb("export", HelpText = "Extracts commu text from .uasset files")]
         private class ExportClass
         {
@@ -25,16 +17,26 @@ namespace Commu_Kit
             public string OutputPath { get; set; }
         }
 
-        [Verb("import", HelpText = "Patches .uasset files with translation from .csv files")]
+        [Verb("import", HelpText = "Patches .uasset files with translation from .csv or .json files")]
         private class ImportClass
         {
-            [Value(0, HelpText = "Input .csv file path", MetaName = "CsvInputPath", Required = true)]
+            [Value(0, HelpText = "Input file path (.csv or .json)", MetaName = "CsvInputPath", Required = true)]
             public string CsvInputPath { get; set; }
 
             [Value(1, HelpText = "Input .uasset file path", MetaName = "UassetInputPath", Required = true)]
             public string UassetInputPath { get; set; }
 
             [Option('o', HelpText = "output path")]
+            public string OutputPath { get; set; }
+        }
+
+        [Verb("convert", HelpText = "Converts between .csv and .json files")]
+        private class ConvertClass
+        {
+            [Value(0, HelpText = "Input file path", Required = true)]
+            public string InputPath { get; set; }
+
+            [Value(1, HelpText = "Output file path", Required = true)]
             public string OutputPath { get; set; }
         }
 
@@ -47,23 +49,18 @@ namespace Commu_Kit
                 outputFile = $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileNameWithoutExtension(filePath)}.csv";
                 Console.WriteLine(outputFile);
             }
-
-            UAsset openFile = new UAsset(filePath, UNREAL_VERSION);
-            var Table = (openFile.Exports[0] as DataTableExport)?.Table;
-            if (Table is null)
+            var table = new UAssetTable(filePath);
+            if (outputFile.EndsWith(".csv"))
             {
-                throw new InvalidDataException("Could not access data table. Please check you also have the corresponding .uexp file.");
+                table.WriteCsv(outputFile);
             }
-            var quoteIndexes = new int[] { 3, 4 };
-            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+            else if (outputFile.EndsWith(".json"))
             {
-                Delimiter = ",",
-                ShouldQuote = args => quoteIndexes.Contains(args.Row.Index)
-            };
-            using (var csvExporter = new CsvWriter(new StreamWriter(outputFile), CultureInfo.InvariantCulture))
+                table.WriteJson(outputFile);
+            }
+            else
             {
-                var records = Table.Data.Select((entry) => new CSVClass(entry));
-                csvExporter.WriteRecords(records);
+                throw new ArgumentException("Unrecognised file extension. Please specify a .csv or .json file name.");
             }
             Console.WriteLine("Written to:" + outputFile);
         }
@@ -76,37 +73,48 @@ namespace Commu_Kit
             {
                 outputFile = $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileNameWithoutExtension(filePath)}-NEW.uasset";
             }
-            UAsset openFile = new UAsset(opt.UassetInputPath, UNREAL_VERSION);
-            var Table = (openFile.Exports[0] as DataTableExport)?.Table;
-            if (Table is null)
+            var table = new UAssetTable(opt.UassetInputPath);
+            if (filePath.EndsWith(".csv"))
             {
-                throw new InvalidDataException("Could not access data table. Please check you also have the corresponding .uexp file.");
+                table.ReadCsv(filePath);
             }
-            var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+            else if (filePath.EndsWith(".json"))
             {
-                Delimiter = ",",
-                MissingFieldFound = null
-            };
-            using (var csv = new CsvReader(new StreamReader(filePath, Encoding.UTF8), csvConfig))
-            {
-                var csvLookup = csv.GetRecords<CSVClass>().ToDictionary((entry) => entry.Identifier);
-                foreach (var entry in Table.Data)
-                {
-                    if (entry.Value[1] is StrPropertyData strData)
-                    {
-                        strData.Value = new FString(csvLookup[entry.Name.ToString()].Target.Replace("\r\n", "\n"));
-                    }
-                }
+                table.ReadJson(filePath);
             }
-            openFile.Write(outputFile);
+            else
+            {
+                throw new ArgumentException("Unrecognised file extension. Please specify a .csv or .json file.");
+            }
+            table.ReplaceText();
+            table.WriteUAssetToFile(outputFile);
+        }
+
+        private static void ConvertFile(ConvertClass opt)
+        {
+            string inPath = opt.InputPath;
+            string outPath = opt.OutputPath;
+            if (inPath.EndsWith(".csv") && outPath.EndsWith(".json"))
+            {
+                MessageList.ReadCsv(inPath).WriteJson(outPath);
+            }
+            else if (inPath.EndsWith(".json") && outPath.EndsWith(".csv"))
+            {
+                MessageList.ReadJson(inPath).WriteCsv(outPath);
+            }
+            else
+            {
+                throw new ArgumentException("Incorrect file extensions. Expected a .csv file and a .json file.");
+            }
         }
 
         private static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.Unicode;
-            Parser.Default.ParseArguments<ExportClass, ImportClass>(args)
+            Parser.Default.ParseArguments<ExportClass, ImportClass, ConvertClass>(args)
                 .WithParsed<ExportClass>(ExportFile)
-                .WithParsed<ImportClass>(ImportFile);
+                .WithParsed<ImportClass>(ImportFile)
+                .WithParsed<ConvertClass>(ConvertFile);
         }
     }
 };
