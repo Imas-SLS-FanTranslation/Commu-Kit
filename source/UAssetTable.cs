@@ -32,7 +32,11 @@ namespace Commu_Kit
             {
                 if (entry.Value[1] is StrPropertyData strData)
                 {
-                    strData.Value = new FString(csvLookup[entry.Name.ToString()].Target);
+                    string targetValue = csvLookup[entry.Name.ToString()].Target;
+                    if (!string.IsNullOrWhiteSpace(targetValue))
+                    {
+                        strData.Value = new FString(targetValue);
+                    }
                 }
             }
         }
